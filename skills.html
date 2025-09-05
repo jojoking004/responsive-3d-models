@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Syed Junaid Ahtisham - Skills</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --text-color: #d0e1ff;
+            --highlight-color: #00ffff; /* Cyan */
+            --secondary-highlight: #ff00ff; /* Magenta */
+            --bg-color: #0d0221;
+            --sidebar-width: 80px;
+            --sidebar-width-mobile: 60px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 300;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #webgl-canvas {
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+
+        #loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        #loader-text {
+            color: var(--highlight-color);
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+
+        #progress-bar-container {
+            width: clamp(150px, 50vw, 200px);
+            height: 4px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--highlight-color);
+            transition: width 0.3s ease;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: rgba(10, 20, 45, 0.3);
+            border-right: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 0;
+            box-sizing: border-box;
+        }
+
+        .sidebar-logo {
+            font-family: 'Orbitron', serif;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: #fff;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: auto;
+        }
+
+        .sidebar-link, .social-link {
+            color: var(--text-color);
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .sidebar-link:hover, .social-link:hover {
+            color: var(--highlight-color);
+            transform: scale(1.1);
+            text-shadow: 0 0 10px var(--highlight-color);
+        }
+        
+        .sidebar-link.active {
+            color: var(--highlight-color);
+        }
+
+        .sidebar-social {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        #content-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            min-height: 100vh;
+            padding-left: var(--sidebar-width);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .main-content {
+            flex: 1 1 55%;
+            padding: 2rem 5vw;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .skills-header {
+            text-align: left;
+            width: 100%;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1.5s ease 1s, transform 1.5s ease 1s;
+        }
+
+        .skills-header.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .skills-header h1 {
+            font-family: 'Orbitron', serif;
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            margin: 0;
+            color: #fff;
+            position: relative;
+        }
+
+        .glitch {
+            position: relative;
+            color: white;
+            animation: glitch 5s 5s infinite;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            overflow: hidden;
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--secondary-highlight);
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--highlight-color), 2px 2px var(--secondary-highlight);
+            clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        .skills-header p {
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            color: var(--highlight-color);
+            max-width: 90%;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .skill-card {
+            padding: 1rem;
+            background: rgba(10, 20, 45, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1.5s ease, transform 1.5s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .skill-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(to top, transparent 98%, var(--highlight-color) 98%),
+                linear-gradient(to left, transparent 98%, var(--highlight-color) 98%);
+            background-size: 15px 15px;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .skill-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            animation: 
+                glowAnimation 4s ease-in-out infinite;
+        }
+        
+        .skill-card:nth-child(2).visible { animation-delay: 0.2s; }
+        .skill-card:nth-child(3).visible { animation-delay: 0.4s; }
+        .skill-card:nth-child(4).visible { animation-delay: 0.6s; }
+
+        .skill-card h2 {
+            font-family: 'Orbitron', serif;
+            font-size: clamp(1.2rem, 3vw, 1.4rem);
+            color: var(--highlight-color);
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .skills-container span {
+            display: inline-block;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            margin: 0.2rem;
+            font-size: clamp(0.7rem, 2vw, 0.8rem);
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
+        }
+        
+        .skills-container span:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: rgba(0, 255, 255, 0.4);
+            color: #fff;
+            text-shadow: 0 0 5px var(--highlight-color);
+        }
+
+        @keyframes glowAnimation {
+            0% { box-shadow: 0 0 8px rgba(0, 255, 255, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
+            100% { box-shadow: 0 0 8px rgba(0, 255, 255, 0.2); }
+        }
+        
+        @keyframes glitch-anim-1 {
+            0% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); }
+            50% { clip-path: polygon(0 25%, 100% 25%, 100% 75%, 0 75%); }
+            100% { clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%); }
+            50% { clip-path: polygon(0 25%, 100% 25%, 100% 75%, 0 75%); }
+            100% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); }
+        }
+
+        @media (max-width: 1024px) {
+            :root {
+                --sidebar-width: var(--sidebar-width-mobile);
+            }
+
+            #content-container {
+                flex-direction: column-reverse;
+                justify-content: flex-start;
+                padding-left: var(--sidebar-width);
+                padding-top: 10vh;
+            }
+
+            .main-content {
+                align-items: center;
+                text-align: center;
+                padding: 1.5rem;
+                background: rgba(13, 2, 33, 0.7);
+                width: 100%;
+                max-width: 90%;
+                margin: 0 auto;
+            }
+
+            .skills-header {
+                text-align: center;
+            }
+
+            .sidebar {
+                width: var(--sidebar-width-mobile);
+                padding: 1rem 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #canvas-container {
+                height: 100vh;
+                top: 0;
+            }
+
+            #content-container {
+                padding-top: 0;
+                min-height: 100vh;
+            }
+
+            .main-content {
+                padding: 1rem;
+                max-width: 95%;
+            }
+
+            .skills-header h1 {
+                font-size: clamp(1.2rem, 5vw, 2rem);
+            }
+
+            .skills-header p {
+                font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+            }
+
+            .skill-card {
+                padding: 0.8rem;
+            }
+
+            .skill-card h2 {
+                font-size: clamp(1rem, 3vw, 1.2rem);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 50px;
+                padding: 0.5rem 0;
+            }
+
+            #content-container {
+                padding-left: 50px;
+            }
+
+            .sidebar-logo {
+                font-size: 1rem;
+            }
+
+            .sidebar-link, .social-link {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loader-overlay">
+        <div id="loader-text">LOADING ASSETS 0%</div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="webgl-canvas"></canvas>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">SJA</div>
+        <div class="sidebar-links">
+            <a href="index.html" class="sidebar-link" title="Home"><i class="fas fa-home"></i></a>
+            <a href="skills.html" class="sidebar-link active" title="Skills"><i class="fas fa-cogs"></i></a>
+            <a href="resume.html" class="sidebar-link" title="Projects"><i class="fas fa-folder"></i></a>
+            <a href="contact.html" class="sidebar-link" title="Contact"><i class="fas fa-envelope"></i></a>
+            <a href="about-us.html" class="sidebar-link" title="about"><i class="fa-solid fa-address-card"></i></a>
+        </div>
+        <div class="sidebar-social">
+            <a href="#" class="social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" title="GitHub"><i class="fab fa-github"></i></a>
+        </div>
+    </div>
+    
+    <div id="content-container">
+        <div class="main-content">
+            <header class="skills-header" id="skills-header">
+                <h1 class="glitch" data-text="My Arsenal">My Arsenal</h1>
+                <p>A curated collection of the technologies, tools, and creative disciplines I wield to build immersive digital experiences.</p>
+            </header>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h2><i class="fas fa-code"></i> Frontend Development</h2>
+                    <div class="skills-container">
+                        <span>HTML5</span>
+                        <span>CSS3 & SASS</span>
+                        <span>JavaScript (ES6+)</span>
+                        <span>TypeScript</span>
+                        <span>React</span>
+                        <span>Next.js</span>
+                        <span>Vue.js</span>
+                        <span>GSAP</span>
+                        <span>REST APIs</span>
+                        <span>GraphQL</span>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <h2><i class="fas fa-cube"></i> 3D & Graphics</h2>
+                    <div class="skills-container">
+                        <span>Three.js</span>
+                        <span>WebGL</span>
+                        <span>GLSL Shaders</span>
+                        <span>Blender</span>
+                        <span>R3F (React Three Fiber)</span>
+                        <span>Drei</span>
+                        <span>3D Optimization</span>
+                        <span>PBR Materials</span>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <h2><i class="fas fa-palette"></i> Design & Creative</h2>
+                    <div class="skills-container">
+                        <span>UI/UX Design</span>
+                        <span>Figma</span>
+                        <span>Adobe XD</span>
+                        <span>Photoshop</span>
+                        <span>Illustrator</span>
+                        <span>Creative Direction</span>
+                        <span>Motion Graphics</span>
+                        <span>Prototyping</span>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <h2><i class="fas fa-tools"></i> Tools & Platforms</h2>
+                    <div class="skills-container">
+                        <span>Git & GitHub</span>
+                        <span>Vite</span>
+                        <span>Webpack</span>
+                        <span>npm/yarn</span>
+                        <span>Vercel</span>
+                        <span>Netlify</span>
+                        <span>Firebase</span>
+                        <span>Jira</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.142.0/build/three.module.js",
+                "gltf-loader": "https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/loaders/GLTFLoader.js",
+                "draco-loader": "https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/loaders/DRACOLoader.js",
+                "rgbe-loader": "https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/loaders/RGBELoader.js",
+                "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.11.0/index.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'gltf-loader';
+        import { DRACOLoader } from 'draco-loader';
+        import { RGBELoader } from 'rgbe-loader';
+        import { gsap } from 'gsap';
+
+        let scene, camera, renderer, cyberWarrior, mixer;
+        let miniRobot, robotMixer;
+        let miniRobot2, robotMixer2;
+        let xBot, xBotMixer;
+        const warriorAnims = {};
+        const robotAnims = {};
+        const robotAnims2 = {};
+        const xBotAnims = {};
+        const clock = new THREE.Clock();
+        const mouse = new THREE.Vector2();
+        let activeFireworks = [];
+        let isIntroPlaying = false;
+        let introCompleted = false;
+
+        function setupScene() {
+            const canvasContainer = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+
+            const isMobile = window.innerWidth <= 768;
+            const fov = isMobile ? 75 : 45;
+            camera = new THREE.PerspectiveCamera(fov, canvasContainer.offsetWidth / canvasContainer.offsetHeight, 0.1, 1000);
+            const cameraZ = isMobile ? 12 : 18;
+            camera.position.set(0, isMobile ? 3 : 2, cameraZ);
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('webgl-canvas'),
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+        }
+
+        function setupLighting() {
+            const isMobile = window.innerWidth <= 768;
+            const keyLight = new THREE.SpotLight(0x00ffff, 100, 40, Math.PI / 4, 1);
+            keyLight.position.set(isMobile ? -5 : -10, isMobile ? 8 : 10, isMobile ? 8 : 10);
+
+            const rimLight = new THREE.SpotLight(0xff00ff, 60, 40, Math.PI / 4, 1);
+            rimLight.position.set(isMobile ? 5 : 10, isMobile ? 4 : 5, isMobile ? -8 : -10);
+
+            scene.add(keyLight, rimLight);
+        }
+
+        function setupLoaders() {
+            const loadingManager = new THREE.LoadingManager();
+            const loaderOverlay = document.getElementById('loader-overlay');
+            const loaderText = document.getElementById('loader-text');
+            const progressBar = document.getElementById('progress-bar');
+
+            loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+                const progress = Math.round((itemsLoaded / itemsTotal) * 100);
+                loaderText.textContent = `LOADING ASSETS ${progress}%`;
+                progressBar.style.width = `${progress}%`;
+            };
+
+            loadingManager.onLoad = () => {
+                loaderOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loaderOverlay.style.display = 'none';
+                    playIntroSequence();
+                }, 1000);
+            };
+
+            loadingManager.onError = (url) => {
+                console.error(`Error loading ${url}`);
+                loaderText.textContent = 'ERROR LOADING ASSETS';
+                setTimeout(() => {
+                    loaderOverlay.style.opacity = '0';
+                    loaderOverlay.style.display = 'none';
+                }, 3000);
+            };
+
+            return loadingManager;
+        }
+
+        function loadEnvironment(loadingManager) {
+            const rgbeLoader = new RGBELoader(loadingManager);
+            rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr', (texture) => {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                scene.environment = texture;
+            }, undefined, (error) => console.error('Error loading HDR:', error));
+        }
+
+        function loadModels(loadingManager) {
+            const dracoLoader = new DRACOLoader(loadingManager);
+            dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/libs/draco/');
+
+            const gltfLoader = new GLTFLoader(loadingManager);
+            gltfLoader.setDRACOLoader(dracoLoader);
+
+            const isMobile = window.innerWidth <= 768;
+            const cameraZ = isMobile ? 12 : 18;
+
+            gltfLoader.load(
+                'https://threejs.org/examples/models/gltf/Soldier.glb',
+                (gltf) => {
+                    cyberWarrior = gltf.scene;
+                    const modelScale = isMobile ? 3 : 3.5;
+                    cyberWarrior.scale.setScalar(modelScale);
+                    cyberWarrior.position.set(0, isMobile ? -3 : -3.5, cameraZ + 10);
+                    cyberWarrior.rotation.set(0, Math.PI, 0);
+                    scene.add(cyberWarrior);
+
+                    mixer = new THREE.AnimationMixer(cyberWarrior);
+                    gltf.animations.forEach((clip) => {
+                        warriorAnims[clip.name.toLowerCase()] = mixer.clipAction(clip);
+                    });
+                    warriorAnims.idle?.play();
+
+                    // Load miniRobot
+                    gltfLoader.load('https://threejs.org/examples/models/gltf/RobotExpressive.glb', (gltf) => {
+                        miniRobot = gltf.scene;
+                        const robotScale = isMobile ? 0.3 : 0.4;
+                        miniRobot.scale.setScalar(robotScale);
+                        miniRobot.position.set(isMobile ? -2 : -3, 0, isMobile ? -1 : -2);
+                        cyberWarrior.add(miniRobot);
+                        robotMixer = new THREE.AnimationMixer(miniRobot);
+                        gltf.animations.forEach((clip) => {
+                            robotAnims[clip.name.toLowerCase()] = robotMixer.clipAction(clip);
+                        });
+                        (robotAnims.idle || Object.values(robotAnims)[0])?.play();
+                    }, undefined, (error) => console.error('Error loading miniRobot:', error));
+
+                    // Load miniRobot2
+                    gltfLoader.load('https://threejs.org/examples/models/gltf/RobotExpressive.glb', (gltf) => {
+                        miniRobot2 = gltf.scene;
+                        const robotScale = isMobile ? 0.3 : 0.4;
+                        miniRobot2.scale.setScalar(robotScale);
+                        miniRobot2.position.set(isMobile ? 2 : 3, 0, isMobile ? -1 : -2);
+                        cyberWarrior.add(miniRobot2);
+                        robotMixer2 = new THREE.AnimationMixer(miniRobot2);
+                        gltf.animations.forEach((clip) => {
+                            robotAnims2[clip.name.toLowerCase()] = robotMixer2.clipAction(clip);
+                        });
+                        (robotAnims2.idle || Object.values(robotAnims2)[0])?.play();
+                    }, undefined, (error) => console.error('Error loading miniRobot2:', error));
+
+                    // Load xBot
+                    gltfLoader.load('https://threejs.org/examples/models/gltf/Xbot.glb', (gltf) => {
+                        xBot = gltf.scene;
+                        const xBotScale = isMobile ? 1.8 : 2.5;
+                        xBot.scale.setScalar(xBotScale);
+                        xBot.position.set(0, 0, isMobile ? -2 : -4);
+                        cyberWarrior.add(xBot);
+                        xBotMixer = new THREE.AnimationMixer(xBot);
+                        gltf.animations.forEach((clip) => {
+                            xBotAnims[clip.name.toLowerCase()] = xBotMixer.clipAction(clip);
+                        });
+                        (xBotAnims.idle || Object.values(xBotAnims)[0])?.play();
+                    }, undefined, (error) => console.error('Error loading xBot:', error));
+                },
+                undefined,
+                (error) => console.error('Error loading Soldier:', error)
+            );
+        }
+
+        function createFirework(origin) {
+            const isMobile = window.innerWidth <= 768;
+            const particleCount = isMobile ? 50 : 100;
+            const lifespan = 2.5;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const velocities = [];
+            const baseColor = new THREE.Color().setHSL(Math.random(), 1.0, 0.7);
+
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = origin.x;
+                positions[i3 + 1] = origin.y;
+                positions[i3 + 2] = origin.z;
+
+                colors[i3] = baseColor.r;
+                colors[i3 + 1] = baseColor.g;
+                colors[i3 + 2] = baseColor.b;
+
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2
+                ).normalize().multiplyScalar(Math.random() * 8 + 4);
+                velocities.push(velocity);
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: isMobile ? 0.15 : 0.2,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                depthWrite: false
+            });
+
+            const firework = new THREE.Points(geometry, material);
+            firework.userData = {
+                creationTime: clock.getElapsedTime(),
+                lifespan,
+                velocities,
+                origin
+            };
+
+            scene.add(firework);
+            activeFireworks.push(firework);
+        }
+
+        function playIntroSequence() {
+            if (!cyberWarrior || !warriorAnims.run || !warriorAnims.idle) return;
+
+            isIntroPlaying = true;
+            const isMobile = window.innerWidth <= 768;
+            const skillsHeader = document.getElementById('skills-header');
+            const skillCards = document.querySelectorAll('.skill-card');
+
+            const allMixers = [
+                { anims: warriorAnims, runKey: 'run', idleKey: 'idle' },
+                { anims: robotAnims, runKey: 'walking', idleKey: 'idle' },
+                { anims: robotAnims2, runKey: 'walking', idleKey: 'idle' },
+                { anims: xBotAnims, runKey: 'run', idleKey: 'idle' }
+            ];
+
+            allMixers.forEach(data => {
+                const runAction = data.anims[data.runKey] || data.anims['run'];
+                const idleAction = data.anims[data.idleKey];
+                if (runAction && idleAction) {
+                    runAction.reset().play();
+                    idleAction.stop();
+                }
+            });
+
+            gsap.to(cyberWarrior.position, {
+                x: isMobile ? 0 : 6,
+                y: isMobile ? -3 : -3.5,
+                z: isMobile ? 6 : 8,
+                duration: 3,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    allMixers.forEach(data => {
+                        const runAction = data.anims[data.runKey] || data.anims['run'];
+                        const idleAction = data.anims[data.idleKey];
+                        if (runAction && idleAction) {
+                            runAction.crossFadeTo(idleAction, 0.5, true);
+                            idleAction.play();
+                        }
+                    });
+
+                    const finalPos = cyberWarrior.position;
+                    setTimeout(() => createFirework(new THREE.Vector3(finalPos.x - (isMobile ? 2 : 4), finalPos.y + (isMobile ? 5 : 8), finalPos.z - (isMobile ? 3 : 5))), 100);
+                    setTimeout(() => createFirework(new THREE.Vector3(finalPos.x, finalPos.y + (isMobile ? 6 : 10), finalPos.z - (isMobile ? 1 : 2))), 400);
+                    setTimeout(() => createFirework(new THREE.Vector3(finalPos.x + (isMobile ? 2 : 4), finalPos.y + (isMobile ? 4 : 7), finalPos.z - (isMobile ? 2 : 4))), 700);
+
+                    skillsHeader.classList.add('visible');
+                    skillCards.forEach((card, index) => {
+                        setTimeout(() => card.classList.add('visible'), index * 200);
+                    });
+                    isIntroPlaying = false;
+                    introCompleted = true;
+                }
+            });
+
+            gsap.to(cyberWarrior.rotation, {
+                y: isMobile ? Math.PI : Math.PI * 0.75,
+                duration: 3,
+                ease: "power2.inOut"
+            });
+        }
+
+        function onWindowResize() {
+            if (isIntroPlaying) return;
+
+            const canvasContainer = document.getElementById('canvas-container');
+            const isMobile = window.innerWidth <= 768;
+            camera.fov = isMobile ? 75 : 45;
+            camera.aspect = canvasContainer.offsetWidth / canvasContainer.offsetHeight;
+            const cameraZ = isMobile ? 12 : 18;
+            camera.position.set(0, isMobile ? 3 : 2, cameraZ);
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+
+            if (cyberWarrior) {
+                const modelScale = isMobile ? 3 : 3.5;
+                cyberWarrior.scale.setScalar(modelScale);
+                const posY = isMobile ? -3 : -3.5;
+                cyberWarrior.position.y = posY;
+                if (introCompleted) {
+                    cyberWarrior.position.x = isMobile ? 0 : 6;
+                    cyberWarrior.position.z = isMobile ? 6 : 8;
+                } else {
+                    cyberWarrior.position.x = 0;
+                    cyberWarrior.position.z = cameraZ + 10;
+                    cyberWarrior.rotation.set(0, Math.PI, 0);
+                }
+            }
+            if (miniRobot) {
+                const robotScale = isMobile ? 0.3 : 0.4;
+                miniRobot.scale.setScalar(robotScale);
+                miniRobot.position.set(isMobile ? -2 : -3, 0, isMobile ? -1 : -2);
+            }
+            if (miniRobot2) {
+                const robotScale = isMobile ? 0.3 : 0.4;
+                miniRobot2.scale.setScalar(robotScale);
+                miniRobot2.position.set(isMobile ? 2 : 3, 0, isMobile ? -1 : -2);
+            }
+            if (xBot) {
+                const xBotScale = isMobile ? 1.8 : 2.5;
+                xBot.scale.setScalar(xBotScale);
+                xBot.position.set(0, 0, isMobile ? -2 : -4);
+            }
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const currentTime = clock.getElapsedTime();
+
+            mixer?.update(delta);
+            robotMixer?.update(delta);
+            robotMixer2?.update(delta);
+            xBotMixer?.update(delta);
+
+            const gravity = new THREE.Vector3(0, -9.8, 0);
+            for (let i = activeFireworks.length - 1; i >= 0; i--) {
+                const firework = activeFireworks[i];
+                const { creationTime, lifespan, velocities, origin } = firework.userData;
+                const timeElapsed = currentTime - creationTime;
+
+                if (timeElapsed >= lifespan) {
+                    scene.remove(firework);
+                    firework.geometry.dispose();
+                    firework.material.dispose();
+                    activeFireworks.splice(i, 1);
+                    continue;
+                }
+
+                firework.material.opacity = 1.0 - (timeElapsed / lifespan);
+                const positions = firework.geometry.attributes.position.array;
+                for (let j = 0; j < velocities.length; j++) {
+                    const j3 = j * 3;
+                    const velocity = velocities[j];
+                    positions[j3] = origin.x + velocity.x * timeElapsed + 0.5 * gravity.x * timeElapsed * timeElapsed;
+                    positions[j3 + 1] = origin.y + velocity.y * timeElapsed + 0.5 * gravity.y * timeElapsed * timeElapsed;
+                    positions[j3 + 2] = origin.z + velocity.z * timeElapsed + 0.5 * gravity.z * timeElapsed * timeElapsed;
+                }
+                firework.geometry.attributes.position.needsUpdate = true;
+            }
+
+            if (cyberWarrior && document.querySelector('.skill-card')?.classList.contains('visible')) {
+                const isMobile = window.innerWidth <= 768;
+                const mouseFactor = isMobile ? 0 : mouse.x * 0.2;
+                const base = isMobile ? Math.PI : Math.PI * 0.75;
+                const targetRotation = base - mouseFactor;
+                cyberWarrior.rotation.y = THREE.MathUtils.lerp(cyberWarrior.rotation.y, targetRotation, 0.05);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function init() {
+            setupScene();
+            setupLighting();
+            const loadingManager = setupLoaders();
+            loadEnvironment(loadingManager);
+            loadModels(loadingManager);
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            animate();
+        }
+
+        init();
+    </script>
+</body>
+</html>

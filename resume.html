@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syed Junaid Ahtisham - Resume</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --text-color: #d0e1ff;
+            --highlight-color: #ff4d4d; /* Red hue for villainous theme */
+            --bg-color: #02040a;
+            --sidebar-width: 80px;
+            --card-bg: rgba(10, 20, 45, 0.5);
+            --card-border: rgba(255, 77, 77, 0.3); /* Red border */
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 300;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+            z-index: 1;
+        }
+
+        #loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease;
+            font-family: 'Exo 2', sans-serif;
+        }
+
+        #loader-text {
+            color: var(--highlight-color);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+
+        #progress-bar-container {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 77, 77, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--highlight-color);
+            transition: width 0.3s ease;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: rgba(10, 20, 45, 0.3);
+            border-right: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 0;
+            box-sizing: border-box;
+        }
+
+        .sidebar-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #fff;
+            margin-bottom: 3rem;
+        }
+
+        .sidebar-links {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: auto;
+        }
+
+        .sidebar-link, .social-link {
+            color: var(--text-color);
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .sidebar-link:hover, .social-link:hover {
+            color: var(--highlight-color);
+            transform: scale(1.1);
+        }
+
+        .sidebar-social {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        #content-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: flex-end; /* Move resume to right */
+            min-height: 100vh;
+            padding: 2rem 5vw 2rem calc(var(--sidebar-width) + 5vw);
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .resume-card {
+            max-width: 500px; /* Smaller card */
+            width: 40%; /* Compact width */
+            padding: 1.5rem 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            opacity: 0;
+            transform: translateX(50px) scale(0.9); /* Slide in from right */
+            transition: opacity 1.5s ease 1s, transform 1.5s ease 1s;
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.4); /* Red glow */
+        }
+
+        .resume-card.visible {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            animation: 
+                floatAnimation 4s ease-in-out infinite,
+                glowAnimation 2.5s ease-in-out infinite;
+        }
+
+        @keyframes floatAnimation {
+            0% { transform: translateX(0px) scale(1); }
+            50% { transform: translateX(-10px) scale(1.03); }
+            100% { transform: translateX(0px) scale(1); }
+        }
+
+        @keyframes glowAnimation {
+            0% { box-shadow: 0 0 20px rgba(255, 77, 77, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(255, 77, 77, 0.8); }
+            100% { box-shadow: 0 0 20px rgba(255, 77, 77, 0.4); }
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.8rem, 4vw, 2.5rem); /* Smaller for compact card */
+            margin: 0 0 0.5rem 0;
+            color: #fff;
+            letter-spacing: 2px;
+            text-align: center;
+            text-shadow: 0 0 12px var(--highlight-color);
+        }
+
+        h2 {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--highlight-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            border-bottom: 2px solid rgba(255, 77, 77, 0.4);
+            padding-bottom: 0.4rem;
+            text-shadow: 0 0 6px var(--highlight-color);
+        }
+
+        h3 {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin-bottom: 0.4rem;
+        }
+
+        .resume-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .experience-item, .education-item {
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .experience-item::before, .education-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 8px;
+            height: 8px;
+            background: var(--highlight-color);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--highlight-color);
+        }
+
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.3rem;
+            flex-wrap: wrap; /* Added for responsiveness */
+        }
+
+        .job-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .company-name {
+            font-size: 0.9rem;
+            color: var(--highlight-color);
+            margin-top: 0.2rem;
+            display: block;
+        }
+
+        .date-range {
+            font-size: 0.85rem;
+            color: rgba(208, 225, 255, 0.8);
+            white-space: nowrap;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 0.4rem;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        ul li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--highlight-color);
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 0.8rem;
+        }
+
+        .skill-tag {
+            background: rgba(255, 77, 77, 0.15);
+            border: 1px solid rgba(255, 77, 77, 0.25);
+            padding: 0.5rem 0.8rem;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .skill-tag:hover {
+            background: rgba(255, 77, 77, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4);
+        }
+
+        .download-resume {
+            display: block;
+            width: fit-content;
+            margin: 2rem auto 0;
+            padding: 0.8rem 1.5rem;
+            background: var(--highlight-color);
+            color: var(--bg-color);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            box-shadow: 0 0 10px var(--highlight-color);
+        }
+
+        .download-resume:hover {
+            background: #ff6666;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(255, 77, 77, 0.5);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1024px) {
+            #content-container {
+                padding-right: 3vw;
+                padding-left: calc(var(--sidebar-width) + 3vw);
+            }
+            .resume-card {
+                width: 50%;
+                max-width: 450px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 1rem 0;
+                border-right: none;
+                border-bottom: 1px solid var(--card-border);
+                bottom: 0;
+                top: auto;
+            }
+            .sidebar-logo, .sidebar-social {
+                display: none;
+            }
+            .sidebar-links {
+                flex-direction: row;
+                gap: 1.5rem;
+                margin-bottom: 0;
+            }
+            #content-container {
+                padding: 2rem 5vw 100px 5vw; /* Adjust padding for bottom sidebar */
+                justify-content: center; /* Center on mobile */
+            }
+            .resume-card {
+                width: 90%;
+                max-width: 400px;
+            }
+            h1 {
+                font-size: clamp(1.5rem, 6vw, 2rem);
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+            .experience-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .date-range {
+                margin-top: 0.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-links {
+                gap: 1rem;
+            }
+            .sidebar-link {
+                font-size: 1rem;
+            }
+            .resume-card {
+                padding: 1rem 1.2rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.2rem;
+            }
+            .job-title, .company-name, .date-range, ul li, p, .skill-tag {
+                font-size: 0.8rem;
+            }
+            .download-resume {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loader-overlay">
+        <div id="loader-text">LOADING ASSETS 0%</div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+    <canvas id="webgl-canvas"></canvas>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">SJA</div>
+        <div class="sidebar-links">
+            <a href="index.html" class="sidebar-link" title="Home"><i class="fas fa-home"></i></a>
+            <a href="about-us.html" class="sidebar-link" title="About"><i class="fas fa-folder"></i></a>
+            <a href="resume.html" class="sidebar-link" title="Resume"><i class="fas fa-file-alt"></i></a>
+            <a href="contact.html" class="sidebar-link" title="Contact"><i class="fas fa-envelope"></i></a>
+            <a href="skills.html" class="sidebar-link" title="Skills"><i class="fa-solid fa-code"></i></a>
+        </div>
+        <div class="sidebar-social">
+            <a href="https://www.linkedin.com/in/junaidahatisham-dev" class="social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" title="GitHub"><i class="fab fa-github"></i></a>
+        </div>
+    </div>
+
+    <div id="content-container">
+        <div class="resume-card" id="resume-card">
+            <h1>Syed Junaid Ahtisham</h1>
+            <p style="text-align: center; margin-top: 0.5rem; font-size: 0.95rem; color: var(--highlight-color);">Frontend Web Developer & Creative Head</p>
+            <p style="text-align: center; font-size: 0.85rem; margin-bottom: 1.5rem;">
+                <i class="fas fa-map-marker-alt"></i> Johar Town near UMT, Lahore |
+                <i class="fas fa-envelope"></i> sweetbeam004@gmail.com |
+                <i class="fas fa-phone"></i> +923463830673 |
+                <a href="https://www.linkedin.com/in/junaidahatisham-dev" style="color: var(--text-color); text-decoration: none;"><i class="fab fa-linkedin"></i></a> |
+                <a href="#" style="color: var(--text-color); text-decoration: none;"><i class="fab fa-github"></i></a>
+            </p>
+
+            <div class="resume-section">
+                <h2>Professional Summary</h2>
+                <p style="font-size: 0.9rem;">
+                    Frontend Web Developer with 2+ years of experience in building responsive, user-friendly websites and web applications using HTML, CSS, JavaScript, React, and Bootstrap. Adept at blending technical expertise with creative design, backed by professional experience in graphic design, video editing, and animation. Recently served as Creative Head at Ficer Pakistan, Okara, leading digital projects before relocating to Lahore. Passionate about creating seamless user experiences with modern design aesthetics.
+                </p>
+            </div>
+
+            <div class="resume-section">
+                <h2>Core Skills</h2>
+                <div class="skills-grid">
+                    <span class="skill-tag">HTML5</span>
+                    <span class="skill-tag">CSS3</span>
+                    <span class="skill-tag">JavaScript (ES6+)</span>
+                    <span class="skill-tag">React.js</span>
+                    <span class="skill-tag">Bootstrap</span>
+                    <span class="skill-tag">Adobe Photoshop</span>
+                    <span class="skill-tag">Adobe Illustrator</span>
+                    <span class="skill-tag">Adobe Animate</span>
+                    <span class="skill-tag">Adobe Premiere Pro</span>
+                    <span class="skill-tag">Motion Graphics</span>
+                    <span class="skill-tag">UI/UX Design</span>
+                    <span class="skill-tag">Responsive Design</span>
+                    <span class="skill-tag">Cross-Browser Compatibility</span>
+                    <span class="skill-tag">Git/GitHub</span>
+                    <span class="skill-tag">Problem Solving</span>
+                </div>
+            </div>
+
+            <div class="resume-section">
+                <h2>Professional Experience</h2>
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <span class="job-title">Creative Head</span>
+                        <span class="date-range">Jan 2024 – Aug 2025</span>
+                    </div>
+                    <span class="company-name">Ficer Pakistan – Okara, Pakistan</span>
+                    <ul>
+                        <li>Led the creative and web development team for multiple client projects, ensuring delivery of high-quality digital content.</li>
+                        <li>Designed and developed responsive websites using React, Bootstrap, and JavaScript.</li>
+                        <li>Created marketing visuals, promotional videos, and engaging 2D animations for digital campaigns.</li>
+                        <li>Collaborated with cross-functional teams to align creative direction with business objectives.</li>
+                    </ul>
+                </div>
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <span class="job-title">Frontend Web Developer (Freelance & Projects)</span>
+                        <span class="date-range">2022 – Present</span>
+                    </div>
+                    <span class="company-name">Remote & On-Site</span>
+                    <ul>
+                        <li>Developed responsive portfolio websites, landing pages, and e-commerce concepts using HTML, CSS, JavaScript, and Bootstrap.</li>
+                        <li>Built React-based interactive UIs with optimized performance and modern styling.</li>
+                        <li>Designed user interfaces and graphics with Adobe Creative Suite for improved user engagement.</li>
+                        <li>Assisted clients with branding, logo design, and creative media content.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="resume-section">
+                <h2>Education</h2>
+                <div class="education-item">
+                    <div class="experience-header">
+                        <span class="job-title">Bachelor in Software Engineering</span>
+                        <span class="date-range">2025 batch</span>
+                    </div>
+                    <span class="company-name">University of Punjab, Allama Iqbal Campus</span>
+                </div>
+            </div>
+
+            <div class="resume-section">
+                <h2>Projects</h2>
+                <div class="experience-item">
+                    <h3> cognimia Software house</h3>
+                    <ul>
+                        <li>Built a fully responsive music-themed website using Bootstrap. <br> link  <br> https://cognimiatech.com/</li>
+                    </ul>
+                </div>
+                <div class="experience-item">
+                    <h3>Hiking Landing Page Replica</h3>
+                    <ul>
+                        <li>Created a pixel-perfect React replica of a hiking landing page design with animations.</li>
+                    </ul>
+                </div>
+                <div class="experience-item">
+                    <h3>Personal Portfolio Website</h3>
+                    <ul>
+                        <li>Developed and deployed a modern portfolio showcasing projects and design work.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="resume-section">
+                <h2>Additional Information</h2>
+                <ul>
+                    <li><strong>Languages:</strong> English (Fluent), Urdu (Native), Hindi (Fluent), Spanish (Beginner)</li>
+                    <li><strong>Location:</strong> Currently based in Lahore, open to on-site & remote opportunities</li>
+                </ul>
+            </div>
+
+            <a href="syed_junaid_ahtisham_resume.pdf" download="Syed_Junaid_Ahtisham_Resume.pdf" class="download-resume">Download Resume <i class="fas fa-download"></i></a>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.142.0/build/three.module.js",
+                "gltf-loader": "https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/loaders/GLTFLoader.js",
+                "draco-loader": "https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/loaders/DRACOLoader.js",
+                "rgbe-loader": "https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/loaders/RGBELoader.js",
+                "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.11.0/index.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'gltf-loader';
+        import { DRACOLoader } from 'draco-loader';
+        import { RGBELoader } from 'rgbe-loader';
+        import { gsap } from 'gsap';
+
+        let scene, camera, renderer, spaceship, cardLight, particles;
+        const clock = new THREE.Clock();
+        const mouse = new THREE.Vector2();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x02040a, 5, 50);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(-10, 0, 20); // Offset to left for model focus
+
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas'), antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+
+            const loadingManager = new THREE.LoadingManager();
+            const loaderOverlay = document.getElementById('loader-overlay');
+            const loaderText = document.getElementById('loader-text');
+            const progressBar = document.getElementById('progress-bar');
+
+            loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+                const progress = Math.round((itemsLoaded / itemsTotal) * 100);
+                loaderText.textContent = `LOADING ASSETS ${progress}%`;
+                progressBar.style.width = `${progress}%`;
+            };
+
+            loadingManager.onLoad = () => {
+                loaderOverlay.style.opacity = '0';
+                setTimeout(() => loaderOverlay.style.display = 'none', 1000);
+                startIntroAnimation();
+            };
+
+            const rgbeLoader = new RGBELoader(loadingManager);
+            rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr', (texture) => {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                scene.environment = texture;
+            });
+
+            // Villainous lighting
+            const keyLight = new THREE.SpotLight(0xff4d4d, 80, 50, Math.PI / 4, 1); // Red key light
+            keyLight.position.set(-20, 20, 20);
+            const rimLight = new THREE.SpotLight(0xffb86c, 50, 50, Math.PI / 4, 1);
+            rimLight.position.set(20, 10, -20);
+            const ambientLight = new THREE.AmbientLight(0x330000, 0.3); // Dark red ambient
+            scene.add(keyLight, rimLight, ambientLight);
+
+            // Card light for resume
+            cardLight = new THREE.SpotLight(0xff4d4d, 0, 40, Math.PI / 5, 0.7, 1.5);
+            cardLight.position.set(15, 10, -8); // Positioned for right-side resume
+            const cardPosition = new THREE.Vector3(15, 0, 0);
+            cardLight.target.position.copy(cardPosition);
+            scene.add(cardLight);
+            scene.add(cardLight.target);
+
+            const dracoLoader = new DRACOLoader(loadingManager);
+            dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.142.0/examples/jsm/libs/draco/');
+            const gltfLoader = new GLTFLoader(loadingManager);
+            gltfLoader.setDRACOLoader(dracoLoader);
+
+            // SciFiHelmet for villainous aesthetic
+            gltfLoader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SciFiHelmet/glTF/SciFiHelmet.gltf', (gltf) => {
+                spaceship = gltf.scene;
+                spaceship.scale.setScalar(5);
+                spaceship.position.set(-10, 0, 0); // Left side
+                scene.add(spaceship);
+            });
+
+            // Particle system for ominous space dust
+            const particleCount = 15000;
+            const posArray = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 200;
+            }
+            const particleGeometry = new THREE.BufferGeometry();
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMaterial = new THREE.PointsMaterial({ size: 0.015, color: 0xff4d4d, transparent: true, opacity: 0.6 });
+            particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            animate();
+        }
+
+        function startIntroAnimation() {
+            const resumeCard = document.getElementById('resume-card');
+
+            // Dramatic camera sweep
+            gsap.to(camera.position, {
+                x: -5,
+                z: 15,
+                duration: 5,
+                ease: "power3.inOut"
+            });
+
+            // Villainous model animation
+            gsap.to(spaceship.position, {
+                x: -8,
+                y: 2,
+                z: -5,
+                duration: 4,
+                ease: "power3.inOut"
+            });
+            gsap.to(spaceship.rotation, {
+                y: "+=" + Math.PI * 3,
+                x: 0.5,
+                z: 0.2,
+                duration: 5,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    resumeCard.classList.add('visible');
+                    gsap.to(cardLight, { intensity: 60, duration: 2, ease: "power2.in" });
+                    startVillainousAnimation();
+                }
+            });
+        }
+
+        function startVillainousAnimation() {
+            // Looping villainous movements
+            gsap.to(spaceship.rotation, {
+                y: "+=" + Math.PI * 2,
+                x: 0.7,
+                z: -0.3,
+                duration: 6,
+                ease: "power1.inOut",
+                repeat: -1,
+                yoyo: true
+            });
+            gsap.to(spaceship.position, {
+                y: "+=2",
+                x: "-=1",
+                duration: 3,
+                ease: "sine.inOut",
+                repeat: -1,
+                yoyo: true
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (spaceship && document.getElementById('resume-card').classList.contains('visible')) {
+                spaceship.rotation.y += ((-1.0 + mouse.x * 0.2) - spaceship.rotation.y) * 0.03;
+                spaceship.rotation.x += ((0.5 - mouse.y * 0.2) - spaceship.rotation.x) * 0.03;
+                cardLight.target.position.x = 15 + mouse.x * 5;
+                cardLight.target.position.y = mouse.y * 3;
+            }
+            if (particles) {
+                particles.rotation.y += 0.0003;
+            }
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>

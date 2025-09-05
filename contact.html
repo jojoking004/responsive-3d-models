@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cinematic Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Styles */
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden; /* Hide horizontal scrollbar */
+            overflow-y: scroll; /* Enable vertical scroll for content */
+            background: #0a0a0a;
+            position: relative;
+        }
+
+        /* Sparkle effect styles */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999; /* Ensure sparkles are on top */
+        }
+
+        body::before {
+            background: radial-gradient(circle, transparent 20%, rgba(0, 255, 255, 0.05) 50%, transparent 80%) 0 0,
+                        radial-gradient(circle, transparent 20%, rgba(0, 255, 255, 0.05) 50%, transparent 80%) 50px 50px;
+            background-size: 100px 100px; /* Adjust size of sparkle pattern */
+            animation: sparkle-pan 60s linear infinite;
+        }
+
+        body::after {
+            background: radial-gradient(circle, transparent 30%, rgba(0, 255, 255, 0.08) 60%, transparent 90%) 20px 20px,
+                        radial-gradient(circle, transparent 30%, rgba(0, 255, 255, 0.08) 60%, transparent 90%) 70px 70px;
+            background-size: 120px 120px; /* Slightly different pattern */
+            animation: sparkle-pan-alt 75s linear infinite reverse; /* Opposite direction */
+        }
+
+        @keyframes sparkle-pan {
+            from { background-position: 0 0; }
+            to { background-position: 100% 100%; }
+        }
+
+        @keyframes sparkle-pan-alt {
+            from { background-position: 0 0; }
+            to { background-position: -100% -100%; }
+        }
+
+
+        /* Cinematic Background Video */
+        #cinematic-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Send to background */
+            overflow: hidden;
+        }
+
+        #background-video {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover; /* Ensure it covers the whole screen */
+            filter: brightness(0.7) contrast(1.2); /* Adjust for cinematic look */
+            display: block; /* Ensure the video is always visible */
+        }
+
+        /* Content Overlay */
+        #content-overlay {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4); /* Subtle overlay for readability */
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            padding: 20px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 50px;
+            width: 100%; /* Ensure header takes full width for responsive centering */
+        }
+
+        header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4em;
+            color: #00ffff; /* Cyberpunk blue */
+            letter-spacing: 5px;
+            animation: text-flicker 1.5s infinite alternate;
+            margin: 0;
+        }
+
+        .tagline {
+            font-size: 1.2em;
+            color: #a0a0a0;
+            margin-top: 10px;
+        }
+
+        /* Main Navigation */
+        #main-navigation {
+            margin-bottom: 50px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%; /* Allow nav to take full width for wrapping */
+            max-width: 900px; /* Limit max width of navigation */
+        }
+
+        .nav-item {
+            display: inline-block;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: #e0e0e0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(0, 255, 255, 0.2);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.8), inset 0 0 5px rgba(0, 255, 255, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .nav-item.active {
+            background-color: rgba(0, 255, 255, 0.4);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 1), inset 0 0 8px rgba(0, 255, 255, 0.7);
+            border-color: #ffffff;
+            font-weight: bold;
+        }
+
+        /* Hero Section */
+        #hero-section {
+            text-align: center;
+            min-height: calc(100vh - 250px); /* Adjusted to account for header/nav height */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 50px;
+            width: 100%; /* Ensure it takes full width */
+            max-width: 900px; /* Limit max width */
+        }
+
+        .character-display {
+            position: relative;
+            width: 300px; /* Adjust size as needed */
+            height: 400px; /* Adjust size as needed */
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.7));
+            animation: character-pulse 3s infinite ease-in-out;
+        }
+
+        .character-glow {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3) 0%, rgba(0, 255, 255, 0) 70%);
+            border-radius: 50%;
+            animation: glow-fade 4s infinite ease-in-out;
+            z-index: -1;
+        }
+
+        .intro-text {
+            font-size: 1.5em;
+            font-weight: 300;
+            color: #c0c0c0;
+            letter-spacing: 1px;
+            text-align: center; /* Ensure text is centered */
+            padding: 0 15px; /* Add padding for smaller screens */
+        }
+
+        /* Animations */
+        @keyframes text-flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow:
+                    0 0 4px #00ffff,
+                    0 0 11px #00ffff,
+                    0 0 19px #00ffff,
+                    0 0 40px #00ffff,
+                    0 0 80px #00ffff,
+                    0 0 90px #00ffff,
+                    0 0 100px #00ffff,
+                    0 0 150px #00ffff;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
+        }
+
+        @keyframes character-pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.7)); }
+            50% { transform: scale(1.02); filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.7)); }
+        }
+
+        @keyframes glow-fade {
+            0% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.7; transform: scale(1); }
+        }
+
+        /* Scroll-triggered section styles */
+        section {
+            opacity: 0;
+            transform: translateY(50px); /* Start slightly below */
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            padding: 60px 20px;
+            margin: 40px auto;
+            max-width: 900px;
+            background: rgba(10, 10, 10, 0.7); /* Slightly darker background for sections */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-sizing: border-box;
+            width: 90%; /* Make sections responsive */
+        }
+
+        section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        section h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+        }
+
+        section p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 1em;
+        }
+
+        section ul {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        section li {
+            font-size: 1.1em;
+            margin-bottom: 0.8em;
+            color: #c0c0c0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        section li::before {
+            content: '•'; /* Bullet point */
+            color: #00ffff;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Project grid styling */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .project-item {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .project-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+        }
+
+        .project-item h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+            font-size: 1.8em;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .project-item p {
+            font-size: 1em;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+        }
+
+        .view-project-btn {
+            display: inline-block;
+            padding: 8px 18px;
+            background-color: #00ffff;
+            color: #0a0a0a;
+            text-decoration: none;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .view-project-btn:hover {
+            background-color: #00e6e6;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+
+        /* Floating images styles */
+        .floating-images-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicks to pass through to content below */
+            overflow: hidden; /* Keep images within bounds */
+            z-index: 0; /* Below content overlay, but above cinematic background */
+        }
+
+        .floating-asset {
+            position: absolute;
+            width: clamp(120px, 15vw, 300px); /* Increased size for prominence */
+            height: auto;
+            opacity: 1; /* Fully opaque for prominence */
+            animation: float-animation linear infinite alternate;
+            z-index: 10;
+        }
+
+        /* Individual color glow classes for each mer-person */
+        .mer-glow-red { filter: drop-shadow(0 0 25px rgba(255, 0, 0, 1)) brightness(1.3); }
+        .mer-glow-green { filter: drop-shadow(0 0 25px rgba(0, 255, 0, 1)) brightness(1.3); }
+        .mer-glow-blue { filter: drop-shadow(0 0 25px rgba(0, 0, 255, 1)) brightness(1.3); }
+        .mer-glow-purple { filter: drop-shadow(0 0 25px rgba(128, 0, 128, 1)) brightness(1.3); }
+        .mer-glow-yellow { filter: drop-shadow(0 0 25px rgba(255, 255, 0, 1)) brightness(1.3); }
+        .mer-glow-cyan { filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1)) brightness(1.3); }
+        .mer-glow-magenta { filter: drop-shadow(0 0 25px rgba(255, 0, 255, 1)) brightness(1.3); }
+        .mer-glow-orange { filter: drop-shadow(0 0 25px rgba(255, 165, 0, 1)) brightness(1.3); }
+        .mer-glow-lime { filter: drop-shadow(0 0 25px rgba(50, 205, 50, 1)) brightness(1.3); }
+        .mer-glow-pink { filter: drop-shadow(0 0 25px rgba(255, 192, 203, 1)) brightness(1.3); }
+        .mer-glow-teal { filter: drop-shadow(0 0 25px rgba(0, 128, 128, 1)) brightness(1.3); }
+        .mer-glow-gold { filter: drop-shadow(0 0 25px rgba(255, 215, 0, 1)) brightness(1.3); }
+        .mer-glow-silver { filter: drop-shadow(0 0 25px rgba(192, 192, 192, 1)) brightness(1.3); }
+
+        /* Define different animation durations, delays, and paths for variety */
+        @keyframes float-animation {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            25% { transform: translate(20px, -30px) scale(1.05); opacity: 1; }
+            50% { transform: translate(-15px, 40px) scale(1.02); opacity: 1; }
+            75% { transform: translate(25px, 20px) scale(1.06); opacity: 1; }
+            100% { transform: translate(0, 0) scale(1); opacity: 1; }
+        }
+
+        /* Apply different animation durations and delays for each asset to make them move independently */
+        .floating-asset:nth-child(1) { animation-duration: 15s; animation-delay: 0s; left: 5%; top: 10%; }
+        .floating-asset:nth-child(2) { animation-duration: 18s; animation-delay: 1.5s; left: 50%; top: 60%; }
+        .floating-asset:nth-child(3) { animation-duration: 22s; animation-delay: 3s; left: 20%; top: 80%; }
+        .floating-asset:nth-child(4) { animation-duration: 16s; animation-delay: 0.5s; left: 80%; top: 25%; }
+        .floating-asset:nth-child(5) { animation-duration: 20s; animation-delay: 2s; left: 15%; top: 45%; }
+        .floating-asset:nth-child(6) { animation-duration: 25s; animation-delay: 4s; left: 70%; top: 15%; }
+        .floating-asset:nth-child(7) { animation-duration: 19s; animation-delay: 1s; left: 30%; top: 5%; }
+        .floating-asset:nth-child(8) { animation-duration: 23s; animation-delay: 3.5s; left: 60%; top: 85%; }
+        .floating-asset:nth-child(9) { animation-duration: 17s; animation-delay: 0.8s; left: 40%; top: 20%; }
+        .floating-asset:nth-child(10) { animation-duration: 21s; animation-delay: 2.5s; left: 10%; top: 70%; }
+        .floating-asset:nth-child(11) { animation-duration: 24s; animation-delay: 4.5s; left: 75%; top: 50%; }
+        .floating-asset:nth-child(12) { animation-duration: 16.5s; animation-delay: 1.2s; left: 25%; top: 30%; }
+        .floating-asset:nth-child(13) { animation-duration: 19.5s; animation-delay: 3.2s; left: 85%; top: 70%; }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            header h1 {
+                font-size: 3.5em;
+            }
+            .tagline {
+                font-size: 1.1em;
+            }
+            .nav-item {
+                font-size: 1em;
+                padding: 9px 18px;
+            }
+            section h2 {
+                font-size: 2.2em;
+            }
+            .intro-text {
+                font-size: 1.4em;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.8em;
+                letter-spacing: 3px;
+            }
+            .tagline {
+                font-size: 1em;
+            }
+            #main-navigation {
+                gap: 15px;
+                padding: 0 10px; /* Add some horizontal padding */
+            }
+            .nav-item {
+                font-size: 0.9em;
+                padding: 8px 15px;
+                flex: 1 1 auto; /* Allow items to grow and shrink */
+                min-width: 100px; /* Minimum width before wrapping */
+            }
+            .character-display {
+                width: 250px;
+                height: 350px;
+                margin-bottom: 25px;
+            }
+            .intro-text {
+                font-size: 1.2em;
+                padding: 0 10px;
+            }
+            section {
+                padding: 40px 15px;
+                margin: 30px auto;
+                width: 95%; /* Make sections slightly wider */
+            }
+            section h2 {
+                font-size: 2em;
+            }
+            .project-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust min for projects */
+                gap: 25px;
+            }
+            .project-item h3 {
+                font-size: 1.6em;
+            }
+            .floating-asset {
+                width: clamp(80px, 18vw, 250px); /* Adjust floating assets size */
+            }
+        }
+
+        @media (max-width: 576px) {
+            header h1 {
+                font-size: 2.2em;
+                letter-spacing: 2px;
+            }
+            .tagline {
+                font-size: 0.9em;
+            }
+            #main-navigation {
+                flex-direction: column; /* Stack nav items vertically */
+                gap: 10px;
+                margin-bottom: 30px;
+            }
+            .nav-item {
+                font-size: 0.85em;
+                padding: 10px 15px;
+                width: 90%; /* Make nav items take more width */
+                max-width: 250px; /* Limit max width */
+                margin: 0 auto; /* Center individual nav items */
+            }
+            .character-display {
+                width: 200px;
+                height: 280px;
+                margin-bottom: 20px;
+            }
+            .intro-text {
+                font-size: 1em;
+                padding: 0 5px;
+            }
+            section {
+                padding: 30px 10px;
+                margin: 20px auto;
+                width: 98%;
+            }
+            section h2 {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            }
+            section p, section li {
+                font-size: 1em;
+            }
+            .project-grid {
+                grid-template-columns: 1fr; /* Stack projects on small screens */
+                gap: 20px;
+            }
+            .project-item {
+                padding: 20px;
+            }
+            .project-item h3 {
+                font-size: 1.5em;
+            }
+            .floating-asset {
+                width: clamp(60px, 20vw, 200px); /* Further adjust floating assets size */
+            }
+        }
+
+        @media (max-width: 400px) {
+            header h1 {
+                font-size: 1.8em;
+                letter-spacing: 1px;
+            }
+            .tagline {
+                font-size: 0.8em;
+            }
+            .nav-item {
+                font-size: 0.75em;
+                padding: 8px 12px;
+                max-width: 200px;
+            }
+            .character-display {
+                width: 150px;
+                height: 200px;
+            }
+            .intro-text {
+                font-size: 0.9em;
+            }
+            section h2 {
+                font-size: 1.6em;
+            }
+            section p, section li {
+                font-size: 0.95em;
+            }
+            .view-project-btn {
+                font-size: 0.8em;
+                padding: 7px 15px;
+            }
+            .floating-asset {
+                width: clamp(50px, 25vw, 150px); /* Smallest size for floating assets */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="cinematic-background">
+        <video autoplay muted loop playsinline id="background-video">
+            <source src="fish.mp4" type="video/mp4">
+            <!-- Consider adding other video formats for broader browser support -->
+            <!-- <source src="fish.webm" type="video/webm"> -->
+            <!-- <source src="fish.ogg" type="video/ogg"> -->
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <!-- Floating Images Container - Now with Mer Person placeholders -->
+    <div class="floating-images-container">
+        <!-- Remember to replace "path/to/your/" with the actual path to your saved images -->
+        <img src="mer-1.png" alt="Beautiful Mer Person 1" class="floating-asset mer-glow-red">
+        <img src="mer-2.png" alt="Beautiful Mer Person 2" class="floating-asset mer-glow-green">
+        <img src="mer-3.png" alt="Beautiful Mer Person 3" class="floating-asset mer-glow-blue">
+        <img src="mer-4.png" alt="Beautiful Mer Person 4" class="floating-asset mer-glow-purple">
+        <img src="mer-5.png" alt="Beautiful Mer Person 5" class="floating-asset mer-glow-yellow">
+        <img src="mer-6.png" alt="Beautiful Mer Person 6" class="floating-asset mer-glow-cyan">
+        <img src="mer-7.png" alt="Beautiful Mer Person 7" class="floating-asset mer-glow-magenta">
+        <img src="mer-8.png" alt="Beautiful Mer Person 8" class="floating-asset mer-glow-orange">
+        <img src="mer 10.png" alt="Beautiful Mer Person 9" class="floating-asset mer-glow-lime">
+        <img src="mer-11.png" alt="Beautiful Mer Person 10" class="floating-asset mer-glow-pink">
+        <img src="mer-12.png" alt="Beautiful Mer Person 11" class="floating-asset mer-glow-teal">
+        <img src="mer-13.png" alt="Beautiful Mer Person 12" class="floating-asset mer-glow-gold">
+        <img src="mer-9.png" alt="Beautiful Mer Person 13" class="floating-asset mer-glow-silver">
+    </div>
+
+    <div id="content-overlay">
+        <header>
+            <h1>SJA</h1>
+            <p class="tagline">you dream we build</p>
+        </header>
+
+        <nav id="main-navigation">
+            <a href="index.html" class="nav-item">home</a>            
+            <a href="about.html" class="nav-item">ABOUT</a>
+            <a href="resume.html" class="nav-item">Resume</a>
+            <a href="skills.html" class="nav-item">SKILLS</a>
+            <a href="contact.html" class="nav-item">CONTACT</a>
+        </nav>
+
+        <section id="hero-section">
+            <div class="character-display">
+                <img src="my.png" alt="Your Hyper-Realistic Character" class="character-image">
+                <div class="character-glow"></div>
+            </div>
+            <p class="intro-text">Welcome to my universe.</p>
+        </section>
+
+        <!-- New sections for scroll effect -->
+        <section id="about">
+            <h2>ABOUT ME</h2>
+            <p>I am a passionate [Your Profession] with expertise in [Area 1], [Area 2], and [Area 3]. My journey through the digital cosmos has equipped me with the skills to craft immersive narratives and visually stunning experiences. With a keen eye for detail and a drive for innovation, I specialize in bringing complex ideas to life, transforming concepts into captivating realities.</p>
+            <p>My work philosophy centers on [Principle 1] and [Principle 2], always pushing the boundaries of what's possible in [Your Industry].</p>
+        </section>
+
+        <section id="projects">
+            <h2>PROJECTS</h2>
+            <p>Here's a glimpse into my most notable missions:</p>
+            <div class="project-grid">
+                <div class="project-item">
+                    <h3>Project Alpha: Quantum Weaver</h3>
+                    <p>A ground-breaking initiative in AI-driven visual effects, pushing the boundaries of real-time rendering for cinematic experiences.</p>
+                    <a href="#" class="view-project-btn">View Details</a>
+                </div>
+                <div class="project-item">
+                    <h3>Project Beta: Neo-Synth City</h3>
+                    <p>Exploration into procedural world generation for open-world games, focusing on emergent narratives and environmental storytelling.</p>
+                    <a href="#" class="view-project-btn">View Details</a>
+                </div>
+                <div class="project-item">
+                    <h3>Project Gamma: Chrono-Lens</h3>
+                    <p>A conceptual UI/UX design project for a time-manipulation interface, blending intuitive controls with a futuristic aesthetic.</p>
+                    <a href="#" class="view-project-btn">View Details</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills">
+            <h2>SKILLS</h2>
+            <p>My arsenal includes:</p>
+            <ul>
+                <li>Advanced **[Skill 1 - e.g., 3D Modeling & Animation (Blender, Maya)]**</li>
+                <li>Proficient in **[Software/Tool 1 - e.g., Unreal Engine 5]**, **[Software/Tool 2 - e.g., Adobe After Effects]**</li>
+                <li>Expertise in **[Skill 2 - e.g., Photogrammetry & Digital Sculpting]** methodologies</li>
+                <li>Creative problem-solving and **[Skill 3 - e.g., Procedural Content Generation]**</li>
+                <li>Strong understanding of **[Skill 4 - e.g., Cinematic Storyboarding & Pre-visualization]**</li>
+            </ul>
+        </section>
+
+        <section id="contact">
+            <h2>CONNECT WITH ME</h2>
+            <p>Ready to embark on a new mission? Let's collaborate.</p>
+            <p>Email: <a href="mailto:your.email@example.com" class="nav-item">your.email@example.com</a></p>
+        
+            <p>LinkedIn: <a href="https://linkedin.com/in/yourprofile" target="_blank" class="nav-item">Your LinkedIn Profile</a></p>
+            <p>Portfolio: <a href="https://artstation.com/yourprofile" target="_blank" class="nav-item">Your ArtStation/Behance</a></p>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get the current page's filename (e.g., "index.html", "about.html")
+            const currentPath = window.location.pathname.split('/').pop(); 
+            
+            // Add 'active' class to the corresponding nav item
+            document.querySelectorAll('#main-navigation a').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Smooth scroll for internal links (if any sections remain on a page)
+            // This now specifically targets links with an '#' in their href
+            document.querySelectorAll('#main-navigation a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            // Scroll-triggered section visibility (for sections on the current page)
+            const sections = document.querySelectorAll('section');
+
+            const observerOptions = {
+                root: null, // viewport
+                rootMargin: '0px',
+                threshold: 0.3 // Trigger when 30% of the item is visible
+            };
+
+            const sectionObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        // Optionally, stop observing once visible
+                        // observer.unobserve(entry.target);
+                    } else {
+                        // Optional: remove class when out of view if you want to re-animate on scroll up
+                        // entry.target.classList.remove('is-visible');
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                sectionObserver.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>
