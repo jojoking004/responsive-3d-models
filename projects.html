@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects | Visual Alchemy</title>
+    <link rel="preload" href="https://threejs.org/examples/models/gltf/Horse.glb" as="fetch" crossorigin="anonymous">
+    <style>
+        :root {
+            --glow-color: hsl(280, 100%, 70%);
+            --highlight-color: #ffdae9;
+            --bg-color: #06010d;
+            --card-bg: rgba(18, 9, 31, 0.5);
+            --sidebar-width: 260px;
+            --project-accent: hsl(200, 100%, 70%);
+            --motion-accent: hsl(330, 100%, 70%);
+            --design-accent: hsl(80, 100%, 70%);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--glow-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--highlight-color); }
+
+        body {
+            margin: 0;
+            font-family: 'Garamond', serif, system-ui;
+            font-weight: 300;
+            color: #f0e8ff;
+            background: var(--bg-color);
+            overflow-x: hidden;
+        }
+        
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
+        /* --- EPIC LOADER STYLES --- */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg-color); z-index: 1000; display: flex;
+            justify-content: center; align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .loader-container {
+            text-align: center;
+        }
+        .loader-ring {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--project-accent);
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 1.5s linear infinite;
+            margin: 0 auto;
+            box-shadow: 0 0 25px var(--project-accent);
+        }
+        .loader-text {
+            color: #f0e8ff;
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px var(--project-accent);
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse-text {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        /* --- END LOADER STYLES --- */
+
+        #loader.hidden { opacity: 0; visibility: hidden; }
+        
+        #three-canvas {
+            position: fixed; top: 0; left: 0; z-index: -1;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        #three-canvas.visible {
+            opacity: 1;
+        }
+
+        #main-content {
+            opacity: 0;
+            transition: opacity 1s ease 0.2s, filter 0.4s ease;
+            position: relative;
+            z-index: 1;
+        }
+        #main-content.visible { opacity: 1; }
+        
+        body.sidebar-open #main-content {
+             filter: blur(5px) brightness(0.5);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem 0;
+            box-sizing: border-box;
+            z-index: 200;
+            
+            background: linear-gradient(to right, rgba(18, 9, 31, 0.5), rgba(18, 9, 31, 0.2));
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        .sidebar.is-open {
+            transform: translateX(0);
+        }
+
+        .sidebar-logo {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #fff;
+            text-decoration: none;
+            text-shadow: 0 0 12px var(--project-accent);
+            margin-bottom: 4rem;
+            animation: text-glow 3s ease-in-out infinite alternate;
+        }
+
+        .sidebar-links {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .sidebar-links a {
+            color: #dcbaff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 400;
+            padding: 1rem 2.5rem;
+            position: relative;
+            transition: color 0.3s ease, background-color 0.4s ease;
+        }
+        
+        .sidebar-links a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: var(--highlight-color);
+            box-shadow: 0 0 12px var(--highlight-color);
+            transform: scaleY(0);
+            transform-origin: center;
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .sidebar-links a:hover {
+            color: #fff;
+            background-color: rgba(255, 218, 233, 0.05);
+        }
+        
+        .sidebar-links a:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .nav-toggle-container {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            z-index: 201;
+            cursor: pointer;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        body.sidebar-open .nav-toggle-container {
+            opacity: 0;
+            transform: translateX(-120px);
+            pointer-events: none;
+        }
+        
+        .nav-toggle-button {
+            width: 50px;
+            height: 50px;
+            background: rgba(18, 9, 31, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            animation: pulse-button 3s infinite;
+        }
+        
+        .nav-toggle-container:hover .nav-toggle-button {
+            box-shadow: 0 0 25px var(--project-accent);
+            transform: scale(1.1);
+        }
+
+        /* --- SIDEBAR INSTRUCTION --- */
+        #sidebar-instruction {
+            position: fixed;
+            top: 2.2rem;
+            left: 5.5rem;
+            z-index: 201;
+            padding: 0.5rem 1rem;
+            background: rgba(18, 9, 31, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: var(--highlight-color);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            font-weight: 400;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 1s ease, transform 1s ease;
+            animation: shimmer-text 3s ease-in-out infinite;
+        }
+        
+        #sidebar-instruction.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        #sidebar-instruction.hidden {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+
+        @keyframes shimmer-text {
+            0%, 100% { text-shadow: 0 0 6px var(--highlight-color); }
+            50% { text-shadow: 0 0 12px var(--glow-color); }
+        }
+
+        @keyframes pulse-button {
+            0%, 100% { box-shadow: 0 0 15px var(--glow-color); }
+            50% { box-shadow: 0 0 25px var(--highlight-color); }
+        }
+
+        /* --- MAIN CONTENT --- */
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 2rem;
+            min-height: 200vh;
+        }
+
+        .hero-header {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .hero-header h1 {
+            font-size: clamp(4rem, 12vw, 8rem);
+            font-weight: 700; 
+            margin: 0; 
+            color: #fff;
+            animation: text-glow 2.5s ease-in-out infinite alternate;
+            background: linear-gradient(45deg, var(--project-accent), var(--highlight-color), var(--motion-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .hero-header .tagline {
+            font-size: clamp(1.2rem, 3vw, 1.8rem); 
+            color: #dcbaff; 
+            margin-top: 0.5rem;
+            font-style: italic;
+            max-width: 800px;
+            line-height: 1.5;
+        }
+
+        @keyframes text-glow {
+            from { text-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px var(--project-accent), 0 0 35px var(--motion-accent); }
+            to { text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 0 40px var(--design-accent), 0 0 50px var(--project-accent); }
+        }
+
+        .scroll-indicator {
+            position: absolute; 
+            bottom: 2rem; 
+            font-size: 2rem; 
+            color: #fff;
+            animation: bounce 2.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        /* --- PROJECTS SECTION --- */
+        .projects-section {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, transparent, var(--project-accent), transparent);
+        }
+
+        .project-category {
+            margin-bottom: 6rem;
+        }
+
+        .category-title {
+            font-size: 2.2rem;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .category-title::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .video-editing .category-title::before {
+            background: var(--project-accent);
+            box-shadow: 0 0 15px var(--project-accent);
+        }
+
+        .motion-graphics .category-title::before {
+            background: var(--motion-accent);
+            box-shadow: 0 0 15px var(--motion-accent);
+        }
+
+        .graphic-design .category-title::before {
+            background: var(--design-accent);
+            box-shadow: 0 0 15px var(--design-accent);
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: transparent;
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.4s ease;
+            height: 400px;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, transparent, var(--project-accent), transparent);
+            z-index: -1;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
+        }
+
+        .project-card-inner {
+            height: 100%;
+            background: var(--card-bg);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .project-media {
+            height: 60%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-media video,
+        .project-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .project-card:hover .project-media video,
+        .project-card:hover .project-media img {
+            transform: scale(1.05);
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .project-media:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-button {
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: white;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .play-button:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .project-info {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            margin: 0 0 0.8rem 0;
+            color: white;
+        }
+
+        .project-description {
+            color: #dcbaff;
+            font-size: 1rem;
+            line-height: 1.6;
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .project-tag {
+            background: rgba(255,255,255,0.1);
+            color: #dcbaff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* --- SPECIAL FEATURED PROJECT --- */
+        .featured-project {
+            grid-column: 1 / -1;
+            height: 500px;
+        }
+
+        .featured-project .project-media {
+            height: 70%;
+        }
+
+        .featured-project .project-title {
+            font-size: 2rem;
+        }
+
+        /* --- TECH STACK SECTION --- */
+        .tech-stack {
+            margin-top: 8rem;
+            padding: 4rem 2rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .tech-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-5px);
+            border-color: var(--project-accent);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .tech-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .tech-name {
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        /* --- CHATBOT STYLES --- */
+        #chatbot-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--project-accent);
+            border-radius: 50%;
+            border: none;
+            color: #fff;
+            font-size: 1.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 0 20px var(--project-accent), 0 0 30px var(--project-accent);
+            animation: pulse-button 2s infinite;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        #chatbot-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px var(--highlight-color), 0 0 45px var(--highlight-color);
+        }
+
+        #chatbot-window {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 350px;
+            height: 500px;
+            background: var(--card-bg);
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform-origin: bottom right;
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+        }
+
+        #chatbot-window.visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h3 {
+            margin: 0;
+            font-weight: 500;
+            text-shadow: 0 0 8px var(--project-accent);
+        }
+        #close-chat {
+            background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+        }
+        #close-chat:hover { opacity: 1; }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .chat-message {
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background: var(--project-accent);
+            color: var(--bg-color);
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        
+        .bot-message {
+            background: rgba(255,255,255,0.1);
+            color: #f0e8ff;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .typing-indicator span {
+            width: 8px; height: 8px; background-color: rgba(255,255,255,0.5); border-radius: 50%; animation: typing-dots 1.4s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing-dots {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #chat-input-field {
+            flex-grow: 1;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 0.7rem 1rem;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        #chat-input-field:focus {
+            border-color: var(--project-accent);
+            box-shadow: 0 0 10px var(--project-accent);
+        }
+        #send-chat {
+            margin-left: 0.5rem; background: var(--project-accent); border: none; color: #fff;
+            width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        #send-chat:hover { background: var(--highlight-color); color: var(--bg-color); transform: scale(1.1); }
+
+        @media (max-width: 768px) {
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .project-card {
+                height: 350px;
+            }
+            
+            .tech-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .hero-header h1 {
+                font-size: clamp(2.5rem, 10vw, 5rem);
+            }
+            
+            .section-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loader">
+        <div class="loader-container">
+            <div class="loader-ring"></div>
+            <div class="loader-text">LOADING VISUAL ALCHEMY...</div>
+        </div>
+    </div>
+    <canvas id="three-canvas"></canvas>
+    
+    <div class="nav-toggle-container" aria-label="Toggle Navigation">
+        <div class="nav-toggle-button">✧</div>
+    </div>
+    <div id="sidebar-instruction">Navigate to other realms</div>
+    
+    <nav class="sidebar">
+        <a href="index.html" class="sidebar-logo">Portfolio</a>
+        <div class="sidebar-links">
+            <a href="index.html">Home</a>
+            <a href="about-us.html">About</a>
+            <a href="projects.html" style="color: var(--highlight-color);">Projects</a>
+            <a href="skills.html">Skills</a>
+            <a href="contactme.html">Contact</a>
+            <a href="resume.html">Resume</a>
+        </div>
+    </nav>
+
+    <main id="main-content">
+        <div class="content-wrapper">
+            <header class="hero-header">
+                <h1>Visual Alchemy</h1>
+                <p class="tagline">Where motion meets magic and pixels tell stories. A collection of visual journeys crafted with passion and precision.</p>
+                <div class="scroll-indicator">▼</div>
+            </header>
+
+            <section class="projects-section">
+                <h2 class="section-title">The Work</h2>
+                
+                <div class="project-category video-editing">
+                    <h3 class="category-title">Video Editing</h3>
+                    <div class="project-grid">
+                        <div class="project-card featured-project">
+                            <div class="project-card-inner">
+                                <div class="project-media">
+                                    <!-- Video project placeholder -->
+                                    <div style="width:100%;height:100%;background:linear-gradient(45deg, #0a0a2a, #1a1a4a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:3rem;">🎬</div>
+                                            <div>CINEMATIC REEL</div>
+                                        </div>
+                                    </div>
+                                    <div class="play-overlay">
+                                        <div class="play-button">▶</div>
+                                    </div>
+                                </div>
+                                <div class="project-info">
+                                    <h4 class="project-title">Nebula - Cinematic Short Film</h4>
+                                    <p class="project-description">A breathtaking sci-fi short film edited with precision timing, color grading mastery, and seamless transitions. This project showcases narrative editing at its finest.</p>
+                                    <div class="project-tags">
+                                        <span class="project-tag">Premiere Pro</span>
+                                        <span class="project-tag">Color Grading</span>
+                                        <span class="project-tag">Sound Design</span>
+                                        <span class="project-tag">Cinematic</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="project-category motion-graphics">
+                    <h3 class="category-title">Motion Graphics</h3>
+                    <div class="project-grid">
+                        <div class="project-card">
+                            <div class="project-card-inner">
+                                <div class="project-media">
+                                    <!-- Motion graphics placeholder -->
+                                    <div style="width:100%;height:100%;background:linear-gradient(45deg, #2a0a2a, #4a1a4a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:3rem;">✨</div>
+                                            <div>MOTION REEL</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-info">
+                                    <h4 class="project-title">Quantum Flux - Title Sequence</h4>
+                                    <p class="project-description">An electrifying title sequence with dynamic particle systems, kinetic typography, and seamless 3D integration. Created for a tech startup's launch event.</p>
+                                    <div class="project-tags">
+                                        <span class="project-tag">After Effects</span>
+                                        <span class="project-tag">3D Layers</span>
+                                        <span class="project-tag">Expressions</span>
+                                        <span class="project-tag">Typography</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="project-card">
+                            <div class="project-card-inner">
+                                <div class="project-media">
+                                    <!-- Motion graphics placeholder -->
+                                    <div style="width:100%;height:100%;background:linear-gradient(45deg, #2a2a0a, #4a4a1a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:3rem;">🌀</div>
+                                            <div>DATA VISUALIZATION</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-info">
+                                    <h4 class="project-title">Data Symphony - Infographic Animation</h4>
+                                    <p class="project-description">Complex data transformed into an engaging visual story. This animation brings statistics to life with elegant motion and intuitive design.</p>
+                                    <div class="project-tags">
+                                        <span class="project-tag">Infographics</span>
+                                        <span class="project-tag">Data Visualization</span>
+                                        <span class="project-tag">Motion Design</span>
+                                        <span class="project-tag">Illustrator</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="project-category graphic-design">
+                    <h3 class="category-title">Graphic Design</h3>
+                    <div class="project-grid">
+                        <div class="project-card">
+                            <div class="project-card-inner">
+                                <div class="project-media">
+                                    <!-- Design placeholder -->
+                                    <div style="width:100%;height:100%;background:linear-gradient(45deg, #0a2a2a, #1a4a4a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:3rem;">🎨</div>
+                                            <div>BRAND IDENTITY</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-info">
+                                    <h4 class="project-title">Aether Brand Identity</h4>
+                                    <p class="project-description">Complete visual identity for a luxury tech brand. Includes logo design, color palette, typography system, and comprehensive brand guidelines.</p>
+                                    <div class="project-tags">
+                                        <span class="project-tag">Logo Design</span>
+                                        <span class="project-tag">Branding</span>
+                                        <span class="project-tag">Typography</span>
+                                        <span class="project-tag">Illustrator</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="project-card">
+                            <div class="project-card-inner">
+                                <div class="project-media">
+                                    <!-- Design placeholder -->
+                                    <div style="width:100%;height:100%;background:linear-gradient(45deg, #2a0a0a, #4a1a1a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:3rem;">📱</div>
+                                            <div>UI/UX DESIGN</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-info">
+                                    <h4 class="project-title">Nova App Interface</h4>
+                                    <p class="project-description">Futuristic UI/UX design for a music streaming app. Focus on intuitive navigation, visual hierarchy, and creating an immersive audio experience.</p>
+                                    <div class="project-tags">
+                                        <span class="project-tag">UI Design</span>
+                                        <span class="project-tag">UX Research</span>
+                                        <span class="project-tag">Prototyping</span>
+                                        <span class="project-tag">Figma</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="project-card">
+                            <div class="project-card-inner">
+                                <div class="project-media">
+                                    <!-- Design placeholder -->
+                                    <div style="width:100%;height:100%;background:linear-gradient(45deg, #0a2a0a, #1a4a1a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;">
+                                        <div style="text-align:center;">
+                                            <div style="font-size:3rem;">📖</div>
+                                            <div>EDITORIAL DESIGN</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-info">
+                                    <h4 class="project-title">Chronicles Magazine Layout</h4>
+                                    <p class="project-description">Editorial design for a contemporary culture magazine. Balanced typography, innovative grid systems, and striking visual compositions.</p>
+                                    <div class="project-tags">
+                                        <span class="project-tag">Layout Design</span>
+                                        <span class="project-tag">Editorial</span>
+                                        <span class="project-tag">InDesign</span>
+                                        <span class="project-tag">Print Design</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tech-stack">
+                    <h3 class="section-title">Creative Arsenal</h3>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <div class="tech-icon">🎬</div>
+                            <div class="tech-name">Adobe Premiere Pro</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">✨</div>
+                            <div class="tech-name">After Effects</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🎨</div>
+                            <div class="tech-name">Photoshop</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">✏️</div>
+                            <div class="tech-name">Illustrator</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">📐</div>
+                            <div class="tech-name">InDesign</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">📱</div>
+                            <div class="tech-name">Figma</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🎵</div>
+                            <div class="tech-name">Audition</div>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🌀</div>
+                            <div class="tech-name">DaVinci Resolve</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <div id="chatbot-window">
+        <div class="chat-header">
+            <h3>Visual Oracle</h3>
+            <button id="close-chat">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input-field" placeholder="Ask about projects...">
+            <button id="send-chat">➤</button>
+        </div>
+    </div>
+    <button id="chatbot-toggle" aria-label="Open Chatbot">🎬</button>
+    
+    <script type="importmap">
+        { "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const loader = document.getElementById('loader');
+        const mainContent = document.getElementById('main-content');
+        const threeCanvas = document.getElementById('three-canvas');
+        const header = document.querySelector('.hero-header');
+        const navToggleContainer = document.querySelector('.nav-toggle-container');
+        const sidebar = document.querySelector('.sidebar');
+        const body = document.body;
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('is-open');
+            body.classList.toggle('sidebar-open');
+        }
+
+        navToggleContainer.addEventListener('click', toggleSidebar);
+        
+        mainContent.addEventListener('click', () => {
+            if (sidebar.classList.contains('is-open')) {
+                toggleSidebar();
+            }
+        });
+        
+        sidebar.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (sidebar.classList.contains('is-open')) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const closeChatBtn = document.getElementById('close-chat');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input-field');
+        const sendChatBtn = document.getElementById('send-chat');
+        let chatInitialized = false;
+
+        function toggleChatbot(forceOpen = false) {
+            if (forceOpen) {
+                chatbotWindow.classList.add('visible');
+            } else {
+                chatbotWindow.classList.toggle('visible');
+            }
+
+            if (chatbotWindow.classList.contains('visible') && !chatInitialized) {
+                displayMessage("Greetings! I am the Visual Oracle. Ask me about video editing, motion graphics, or graphic design projects.", 'bot');
+                chatInitialized = true;
+            }
+        }
+        
+        chatbotToggle.addEventListener('click', () => toggleChatbot());
+        closeChatBtn.addEventListener('click', () => toggleChatbot());
+
+        function displayMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${sender}-message`;
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingElement = document.createElement('div');
+            typingElement.className = 'chat-message bot-message typing-indicator';
+            typingElement.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(typingElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return typingElement;
+        }
+
+        function getBotResponse(userInput) {
+            const lowerInput = userInput.toLowerCase();
+            if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
+                return "Welcome to the visual realm! I can tell you about video editing, motion graphics, or graphic design projects.";
+            } else if (lowerInput.includes('video') || lowerInput.includes('edit')) {
+                return "The featured video project is 'Nebula - Cinematic Short Film', a breathtaking sci-fi piece showcasing narrative editing, color grading mastery, and seamless transitions.";
+            } else if (lowerInput.includes('motion') || lowerInput.includes('graphics')) {
+                return "There are two motion graphics projects: 'Quantum Flux - Title Sequence' with dynamic particle systems, and 'Data Symphony - Infographic Animation' that transforms complex data into engaging visual stories.";
+            } else if (lowerInput.includes('design') || lowerInput.includes('graphic')) {
+                return "The graphic design projects include: 'Aether Brand Identity' (complete visual identity), 'Nova App Interface' (futuristic UI/UX), and 'Chronicles Magazine Layout' (editorial design).";
+            } else if (lowerInput.includes('software') || lowerInput.includes('tool')) {
+                return "The creative arsenal includes: Adobe Premiere Pro, After Effects, Photoshop, Illustrator, InDesign, Figma, Audition, and DaVinci Resolve.";
+            } else if (lowerInput.includes('thank')) {
+                return "You're welcome! May your creative journey be illuminated with inspiration!";
+            } else {
+                return "The visual mists obscure that query. Try asking about video editing, motion graphics, or graphic design projects.";
+            }
+        }
+        
+        function handleUserMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            displayMessage(message, 'user');
+            chatInput.value = '';
+
+            const typingIndicator = showTypingIndicator();
+            
+            setTimeout(() => {
+                const botResponse = getBotResponse(message);
+                chatMessages.removeChild(typingIndicator);
+                displayMessage(botResponse, 'bot');
+            }, 1500);
+        }
+
+        sendChatBtn.addEventListener('click', handleUserMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleUserMessage();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const instruction = document.getElementById('sidebar-instruction');
+            
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                mainContent.classList.add('visible');
+                initThreeJS();
+
+                setTimeout(() => {
+                    instruction.classList.add('visible');
+                }, 500);
+
+                setTimeout(() => {
+                    instruction.classList.remove('visible');
+                    instruction.classList.add('hidden');
+                }, 4500);
+
+            }, 1000);
+            
+            const projectCards = document.querySelectorAll('.project-card');
+            const projectObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                        }, index * 200);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            projectCards.forEach(card => {
+                card.classList.remove('visible');
+                projectObserver.observe(card);
+            });
+        });
+        
+        const particles = [];
+
+        function initThreeJS() {
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x06010d, 25, 120);
+            
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 40;
+            camera.position.y = 5;
+            
+            const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const composer = new EffectComposer(renderer);
+            composer.addPass(new RenderPass(scene, camera));
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.6, 0.4);
+            composer.addPass(bloomPass);
+
+            // Create geometric shapes representing creative tools
+            const shapes = [];
+            
+            // Camera shape
+            const cameraGeometry = new THREE.BoxGeometry(4, 3, 2);
+            const cameraMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xaa77ff, 
+                metalness: 0.9, 
+                roughness: 0.1,
+                wireframe: true
+            });
+            const cameraShape = new THREE.Mesh(cameraGeometry, cameraMaterial);
+            cameraShape.position.set(-15, 5, -10);
+            scene.add(cameraShape);
+            shapes.push(cameraShape);
+            
+            // Film reel shape
+            const reelGeometry = new THREE.TorusGeometry(3, 0.5, 8, 30);
+            const reelMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xff77cc, 
+                emissive: 0xff77cc,
+                emissiveIntensity: 0.5,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            const reelShape = new THREE.Mesh(reelGeometry, reelMaterial);
+            reelShape.position.set(15, -3, -15);
+            scene.add(reelShape);
+            shapes.push(reelShape);
+            
+            // Paint brush shape
+            const brushGeometry = new THREE.CylinderGeometry(0.2, 0.5, 6, 8);
+            const brushMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x77aaff, 
+                metalness: 0.7,
+                roughness: 0.3
+            });
+            const brushShape = new THREE.Mesh(brushGeometry, brushMaterial);
+            brushShape.position.set(-10, -8, 5);
+            brushShape.rotation.x = Math.PI / 2;
+            scene.add(brushShape);
+            shapes.push(brushShape);
+            
+            // Add lights
+            scene.add(new THREE.AmbientLight(0x401040, 1.5));
+            
+            const pointLight1 = new THREE.PointLight(0xff77cc, 2, 50);
+            pointLight1.position.set(-15, 10, -10);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0x77aaff, 2, 50);
+            pointLight2.position.set(15, -5, -15);
+            scene.add(pointLight2);
+            
+            const pointLight3 = new THREE.PointLight(0x77ffaa, 2, 50);
+            pointLight3.position.set(-10, -10, 5);
+            scene.add(pointLight3);
+            
+            // Create floating particles
+            const particleCount = 2000;
+            const particleGeometry = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+            const particleColors = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                particlePositions[i3] = (Math.random() - 0.5) * 100;
+                particlePositions[i3 + 1] = (Math.random() - 0.5) * 100;
+                particlePositions[i3 + 2] = (Math.random() - 0.5) * 100;
+                
+                const color = new THREE.Color();
+                const hue = Math.random();
+                if (hue < 0.33) {
+                    color.setHSL(0.8, 0.8, 0.7); // Purple
+                } else if (hue < 0.66) {
+                    color.setHSL(0.1, 0.8, 0.7); // Pink
+                } else {
+                    color.setHSL(0.6, 0.8, 0.7); // Blue
+                }
+                
+                particleColors[i3] = color.r;
+                particleColors[i3 + 1] = color.g;
+                particleColors[i3 + 2] = color.b;
+            }
+            
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 0.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            const clock = new THREE.Clock();
+            
+            function animate() {
+                const delta = clock.getDelta();
+                const elapsedTime = clock.getElapsedTime();
+                
+                // Animate shapes
+                shapes.forEach((shape, index) => {
+                    shape.rotation.x += 0.002 * (index + 1);
+                    shape.rotation.y += 0.003 * (index + 1);
+                    shape.rotation.z += 0.001 * (index + 1);
+                    
+                    // Float up and down
+                    shape.position.y += Math.sin(elapsedTime + index) * 0.02;
+                });
+                
+                // Animate particles
+                const positions = particleGeometry.attributes.position.array;
+                for (let i = 0; i < particleCount; i++) {
+                    const i3 = i * 3;
+                    positions[i3 + 1] += Math.sin(elapsedTime + i) * 0.02;
+                    
+                    if (positions[i3 + 1] > 50) {
+                        positions[i3 + 1] = -50;
+                    }
+                }
+                particleGeometry.attributes.position.needsUpdate = true;
+                
+                // Move camera based on scroll
+                camera.lookAt(scene.position);
+                composer.render();
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            threeCanvas.classList.add('visible');
+
+            function updateCameraOnScroll() {
+                const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = scrollableHeight > 0 ? window.scrollY / scrollableHeight : 0;
+
+                if (header) {
+                    header.style.opacity = Math.max(0, 1 - scrollPercent * 3);
+                }
+                
+                camera.position.z = 40 - scrollPercent * 25;
+                camera.position.y = 5 - scrollPercent * 8;
+                camera.rotation.z = scrollPercent * Math.PI / 20;
+                
+                // Rotate shapes based on scroll
+                shapes.forEach((shape, index) => {
+                    shape.rotation.x += scrollPercent * 0.02;
+                    shape.rotation.y += scrollPercent * 0.03 * (index + 1);
+                });
+            }
+            
+            window.addEventListener('scroll', updateCameraOnScroll);
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+    </script>
+</body>
+</html>
